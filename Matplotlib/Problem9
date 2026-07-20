@@ -1,0 +1,116 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# -----------------------------------
+# Read Dataset
+# -----------------------------------
+
+df = pd.read_csv(r"C:\Users\LENOVO\Bootcamp\Matplotlib\ab_testing.csv")
+
+# -----------------------------------
+# Pandas Part
+# -----------------------------------
+
+# Remove bounce sessions (less than 2 seconds)
+df = df[df["SessionDuration"] >= 2]
+
+# Separate Control and Treatment Groups
+control = df[df["Variant"] == "Control"]
+treatment = df[df["Variant"] == "Treatment"]
+
+# Conversion Rate
+control_conversion = control["Converted"].mean()
+treatment_conversion = treatment["Converted"].mean()
+
+print("Control Conversion Rate :", control_conversion)
+print("Treatment Conversion Rate :", treatment_conversion)
+
+# Average Session Duration
+control_duration = control["SessionDuration"].mean()
+treatment_duration = treatment["SessionDuration"].mean()
+
+print("\nAverage Session Duration")
+print("Control :", control_duration)
+print("Treatment :", treatment_duration)
+
+# -----------------------------------
+# NumPy Part
+# Z-Test Calculation
+# -----------------------------------
+
+# Number of users
+n1 = len(control)
+n2 = len(treatment)
+
+# Number of conversions
+x1 = control["Converted"].sum()
+x2 = treatment["Converted"].sum()
+
+# Conversion Rates
+p1 = x1 / n1
+p2 = x2 / n2
+
+# Pooled Conversion Rate
+p = (x1 + x2) / (n1 + n2)
+
+# Standard Error
+SE = np.sqrt(p * (1 - p) * ((1 / n1) + (1 / n2)))
+
+# Z-Score
+z = (p2 - p1) / SE
+
+print("\nZ-Score :", z)
+
+# Approximate P-Value
+p_value = np.exp(-(z**2) / 2)
+
+print("Approximate P-Value :", p_value)
+
+# -----------------------------------
+# Matplotlib Part
+# PDF Curve
+# -----------------------------------
+
+x = np.linspace(-4, 4, 500)
+
+# Standard Normal Distribution
+y = (1 / np.sqrt(2 * np.pi)) * np.exp(-(x**2) / 2)
+
+plt.figure(figsize=(10,6))
+
+plt.plot(x, y, label="Normal Distribution")
+
+# Critical Region
+plt.fill_between(
+    x,
+    y,
+    where=(x >= 1.96),
+    color="red",
+    alpha=0.3,
+    label="Critical Region"
+)
+
+plt.fill_between(
+    x,
+    y,
+    where=(x <= -1.96),
+    color="red",
+    alpha=0.3
+)
+
+# Observed Z-score
+plt.axvline(
+    z,
+    color="green",
+    linestyle="--",
+    label="Observed Z"
+)
+
+plt.title("A/B Testing Z-Test")
+plt.xlabel("Z Value")
+plt.ylabel("Probability Density")
+
+plt.legend()
+
+plt.show()
